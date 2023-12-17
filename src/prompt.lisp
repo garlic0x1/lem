@@ -80,25 +80,43 @@
         default
         result)))
 
+;; garlic path normalization
+(defun normalize-path-marker (path marker &optional replace)
+  (let ((split (str:split marker path)))
+    (if (= 1 (length split))
+        path 
+        (concatenate 'string 
+                     (or replace marker)
+                     (car (last split))))))
+ 
+(defun normalize-path-input (path)
+  (let* ((rooted (normalize-path-marker path "//" "/"))
+         (homed (normalize-path-marker rooted "~/")))
+    homed))
+
 (defun prompt-for-file (prompt &key directory (default (buffer-directory)) existing
                                     (gravity *default-prompt-gravity*))
+  (message (format nil "prompting for file: ~a" prompt))
   (let ((result
-          (prompt-for-string (if default
-                                 (format nil "~a(~a) " prompt default)
-                                 prompt)
-                             :initial-value (when directory (princ-to-string directory))
-                             :completion-function
-                             (when *prompt-file-completion-function*
-                               (lambda (str)
-                                 (funcall *prompt-file-completion-function*
-                                          (if (alexandria:emptyp str)
-                                              "./"
-                                              str)
-                                          (or directory
-                                              (namestring (user-homedir-pathname))))))
-                             :test-function (and existing #'virtual-probe-file)
-                             :history-symbol 'prompt-for-file
-                             :gravity gravity)))
+          (prompt-for-string 
+           (if default
+               (format nil "~a(~a) " prompt default)
+               prompt)
+           :initial-value (when directory (princ-to-string directory))
+           :completion-function
+           (when *prompt-file-completion-function*
+             (lambda (str)
+               (setf str (normalize-path-input str))
+               (lem/prompt-window::replace-prompt-input str)
+               (funcall *prompt-file-completion-function*
+                        (if (alexandria:emptyp str)
+                            "./"
+                            str)
+                        (or directory
+                            (namestring (user-homedir-pathname))))))
+           :test-function (and existing #'virtual-probe-file)
+           :history-symbol 'prompt-for-file
+           :gravity gravity)))
     (if (string= result "")
         default
         result)))
