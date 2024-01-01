@@ -69,8 +69,8 @@
               (point (buffer-point buffer)))
     (buffer-end point)
     ;; TODO: lisp-modeに依存するのはおかしいので汎用的なパッケージを用意する
-    (lem-lisp-mode/internal::insert-escape-sequence-string point string)
-    ;; (insert-string point string)
+    ;; (lem-lisp-mode/internal::insert-escape-sequence-string point string)
+    (insert-string point string)
     (lem/listener-mode:refresh-prompt buffer nil)))
 
 (defun run-shell-internal ()
