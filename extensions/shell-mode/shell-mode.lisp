@@ -64,13 +64,26 @@
     (setf (buffer-value buffer 'process) process)
     buffer))
 
+
+(defun strip-ansi-escape-codes (string)
+  (ppcre:regex-replace-all "\x1b\[[0-9;]*m"
+                           string 
+                           "")
+ ;  (ppcre:regex-replace-all "\\x1B\\[([0-9]{1,2}(;[0-9]{1,2})?)?[m|K]" 
+ ;                           string 
+ ;                           "")
+  )
+
 (defun output-callback (process string)
   (when-let* ((buffer (process-buffer process))
               (point (buffer-point buffer)))
     (buffer-end point)
     ;; TODO: lisp-modeに依存するのはおかしいので汎用的なパッケージを用意する
     ;; (lem-lisp-mode/internal::insert-escape-sequence-string point string)
-    (insert-string point string)
+    
+    (message "~s" string )
+    (insert-string point (strip-ansi-escape-codes string))
+    
     (lem/listener-mode:refresh-prompt buffer nil)))
 
 (defun run-shell-internal ()
