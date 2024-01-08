@@ -1,5 +1,5 @@
 (defpackage :lem-shell-mode
-  (:use :cl :lem :alexandria)
+  (:use :cl :lem :alexandria-2)
   (:export :*default-shell-command*)
   #+sbcl
   (:lock t))
@@ -13,6 +13,7 @@
               (or
                #-windows
                (uiop:getenv "SHELL")
+               ;; (print (uiop:strcat "TERM=dumb " ))
                #+windows
                (let ((windir (uiop:getenv "windir")))
                  (and windir
@@ -74,6 +75,27 @@
  ;                           "")
   )
 
+(defun control-char-p (ch)
+  (or (< (char-code ch) 32)
+      (= (char-code ch) 127)))
+
+(defun extended-char-p (ch)
+  (> (char-code ch) 127))
+
+(defun strip-special-chars (string &key strip-extended)
+  (let ((needs-removing-p (if strip-extended
+                              (lambda (ch)
+                                (or (control-char-p ch)
+                                    (extended-char-p ch)))
+                              #'control-char-p)))
+    (remove-if needs-removing-p string)))
+
+(defun make-dumb (process)
+  (lem-process:process-send-input 
+   process
+   (format nil "~a~%" "TERM=dumb")))
+
+
 (defun output-callback (process string)
   (when-let* ((buffer (process-buffer process))
               (point (buffer-point buffer)))
@@ -81,17 +103,24 @@
     ;; TODO: lisp-modeに依存するのはおかしいので汎用的なパッケージを用意する
     ;; (lem-lisp-mode/internal::insert-escape-sequence-string point string)
     
-    (message "~s" string )
-    (insert-string point (strip-ansi-escape-codes string))
+    (line-up-last
+     (str:split #\newline string)
+     (mapcar (lambda (it) (delete #\return it))) 
+     (mapcar #'strip-special-chars) 
+     (remove-if #'str:emptyp)
+     (format nil "~{~a~%~}")
+     (insert-string point))
     
     (lem/listener-mode:refresh-prompt buffer nil)))
 
 (defun run-shell-internal ()
-  (create-shell-buffer
-   (lem-process:run-process (shell-command)
-                            :name "shell"
-                            :output-callback 'output-callback
-                            :output-callback-type :process-input)))
+  (let ((proc (lem-process:run-process (shell-command)
+                                       :name "shell"
+                                       :output-callback 'output-callback
+                                       :output-callback-type :process-input)))
+    (create-shell-buffer proc)
+    ;; (make-dumb proc)
+    ))
 
 (define-command run-shell () ()
   (switch-to-window
