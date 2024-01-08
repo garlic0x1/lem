@@ -5,6 +5,9 @@
   (:lock t))
 (in-package :lem-shell-mode)
 
+;; Set TERM=dumb if true, this removes unwanted characters
+(defvar *dumb-term?* nil)
+
 (defvar *default-shell-command* nil "Set if you do want to use non default shell. '(\"/usr/local/bin/bash\")")
 
 (defun shell-command ()
@@ -79,8 +82,7 @@
                :name "shell"
                :output-callback 'output-callback
                :output-callback-type :process-input)))
-    #-unix
-    (lem-process:process-send-input proc "TERM='dumb';")
+    (when *dumb-term?* (lem-process:process-send-input proc "TERM='dumb';"))
     (create-shell-buffer proc)))
 
 (define-command run-shell () ()
