@@ -74,11 +74,14 @@
     (lem/listener-mode:refresh-prompt buffer nil)))
 
 (defun run-shell-internal ()
-  (create-shell-buffer
-   (lem-process:run-process (shell-command)
-                            :name "shell"
-                            :output-callback 'output-callback
-                            :output-callback-type :process-input)))
+  (let ((proc (lem-process:run-process 
+               (shell-command)
+               :name "shell"
+               :output-callback 'output-callback
+               :output-callback-type :process-input)))
+    #-unix
+    (lem-process:process-send-input proc "TERM='dumb';")
+    (create-shell-buffer proc)))
 
 (define-command run-shell () ()
   (switch-to-window
