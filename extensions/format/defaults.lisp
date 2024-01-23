@@ -21,7 +21,7 @@
    (mapcar (curry #'file-in-path ".clang-format"))
    (find-if #'identity)))
 
-(defun clang-format (buf)
+(defun clang-format (buf) 
   "Format a C buffer with clang-format."
   (let ((file (buffer-filename buf)))
     (uiop:run-program

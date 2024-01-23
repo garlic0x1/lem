@@ -78,7 +78,7 @@ link : http://www.daregada.sakuraweb.com/paredit_tutorial_ja.html
   (let ((len (length (line-string point))))
     (or (zerop len)
         (>= (point-charpos point)
-            (1- len)))))
+             (1- len)))))
 
 (defun integer-char-p (char)
   (< (char-code #\0) (char-code char) (char-code #\9)))
@@ -171,6 +171,14 @@ link : http://www.daregada.sakuraweb.com/paredit_tutorial_ja.html
     (insert-character p #\| 2)
     (character-offset p -1)))
 
+(defun whitespace-p (char)
+  (find char str:*whitespaces*))
+
+(defun paredit-whitespace-prefix (point)
+  (ignore-errors
+    (let ((prefix (subseq (line-string point) 0 (point-column point))))
+      (not (find-if (lambda (char) (not (whitespace-p char))) (coerce prefix 'list))))))
+
 (define-command paredit-backward-delete (&optional (n 1)) ("p")
   (when (< 0 n)
     (let ((p (current-point)))
@@ -211,6 +219,12 @@ link : http://www.daregada.sakuraweb.com/paredit_tutorial_ja.html
              (eql (character-at p -1) #\")
              (eql (character-at p -1) #\|))
          (backward-char))
+        ;; go back line when point prefixed with whitespace
+        ((paredit-whitespace-prefix p)
+         (delete-trailing-whitespace)
+         (delete-previous-char (1+ (point-column p)))
+         (insert-string (current-point) " ")
+         )
         (t
          (delete-previous-char))))
     (paredit-backward-delete (1- n))))
@@ -542,5 +556,5 @@ link : http://www.daregada.sakuraweb.com/paredit_tutorial_ja.html
                        ("M-r" . paredit-raise)
                        ("M-(" . paredit-wrap-round)
                        ("M-|" . paredit-vertical-line-wrap)
-                       ("M-\"" . paredit-meta-doublequote))
+                       ("M-\"" . paredit-meta-doublequote)) 
       do (define-key *paredit-mode-keymap* k f))
