@@ -1,10 +1,6 @@
 (defpackage :lem-sdl2/wm
   (:use :cl)
-  (:local-nicknames (:display :lem-sdl2/display))
-  (:export :set-x11-wm-class
-           :display-fullscreen-p
-           :set-fullscreen
-           :toggle-fullscreen))
+  (:export :set-x11-wm-class))
 (in-package :lem-sdl2/wm)
 
 (defparameter +lem-x11-wm-class+ "Lem SDL2")
@@ -21,16 +17,3 @@
 ;;     - https://github.com/libsdl-org/SDL/blob/d3f2de7f297d761a7dc5b0dda3c7b5d7bd49eac9/src/core/unix/SDL_appid.c#L63C45-L63C45
 (defun set-x11-wm-class ()
   (setf (uiop:getenv "SDL_VIDEO_X11_WMCLASS") +lem-x11-wm-class+))
-
-(defun display-fullscreen-p ()
-  (display:with-display (display)
-    (find :fullscreen (sdl2:get-window-flags (display:display-window display)))))
-
-(defun set-fullscreen (bool)
-  (display:with-display (display)
-    (sdl2:set-window-fullscreen
-     (display:display-window display)
-     bool)))
-
-(defun toggle-fullscreen ()
-  (set-fullscreen (not (display-fullscreen-p))))

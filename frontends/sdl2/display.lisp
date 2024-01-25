@@ -37,7 +37,10 @@
            :adapt-high-dpi-font-size
            :change-font
            :with-renderer
-           :with-display-render-target))
+           :with-display-render-target
+           :display-fullscreen-p
+           :set-fullscreen
+           :toggle-fullscreen))
 (in-package :lem-sdl2/display)
 
 (defvar *display*)
@@ -298,3 +301,12 @@
   (utils:create-texture (display-renderer display)
                         (* width (display-char-width display))
                         (* height (display-char-height display))))
+
+(defun display-fullscreen-p ()
+  (find :fullscreen (sdl2:get-window-flags (display-window *display*))))
+
+(defun set-fullscreen (bool)
+  (sdl2:set-window-fullscreen (display-window *display*) bool))
+
+(defun toggle-fullscreen ()
+  (set-fullscreen (not (display-fullscreen-p))))
