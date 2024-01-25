@@ -78,7 +78,7 @@ link : http://www.daregada.sakuraweb.com/paredit_tutorial_ja.html
   (let ((len (length (line-string point))))
     (or (zerop len)
         (>= (point-charpos point)
-            (1- len)))))
+             (1- len)))))
 
 (defun integer-char-p (char)
   (< (char-code #\0) (char-code char) (char-code #\9)))

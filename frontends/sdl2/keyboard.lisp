@@ -48,7 +48,7 @@
         (values (keyinfo-sym keyinfo) (keyinfo-text-input-p keyinfo))
         (when (<= code #x110000)
           (values (string (code-char code))
-                  t)))))
+                   t)))))
 
 (defun make-key (&key ctrl meta shift super sym)
   (when (equal sym (string #\yen_sign))
