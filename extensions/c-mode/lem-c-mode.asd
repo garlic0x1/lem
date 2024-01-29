@@ -3,4 +3,5 @@
   :serial t
   :components ((:file "grammar")
                (:file "format")
-               (:file "c-mode")))
+               (:file "c-mode")
+               (:file "lsp-config")))

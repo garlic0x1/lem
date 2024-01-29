@@ -47,10 +47,10 @@
   (values))
 
 (defmacro define-keys (keymap &body bindings)
-  `(progn ,@(mapcar 
+  `(progn ,@(mapcar
              (lambda (binding)
                `(define-key ,keymap
-                  ,(first binding) 
+                  ,(first binding)
                   ,(second binding)))
              bindings)))
 
@@ -183,9 +183,9 @@
 (defun collect-command-keybindings (command keymap)
   (let ((bindings '()))
     (traverse-keymap keymap
-                     (lambda (kseq cmd)
-                       (when (eq cmd command)
-                         (push kseq bindings))))
+                      (lambda (kseq cmd)
+                        (when (eq cmd command)
+                          (push kseq bindings))))
     (nreverse bindings)))
 
 (defvar *abort-key*)
