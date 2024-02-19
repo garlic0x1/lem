@@ -565,6 +565,7 @@
    :attribute-background-with-reverse)
   ;; color-theme.lisp
   (:export
+   :*load-theme-hook*
    :color-theme-names
    :define-color-theme
    :load-theme)
