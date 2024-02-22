@@ -13,10 +13,19 @@
 (defvar *block-evaluators* (make-hash-table :test #'equal)
   "Dispatch table for block evaluators per language.")
 
+(defvar *result-processors* (make-hash-table :test #'equal)
+  "Dispatch table for result preprocessing.")
+
 (defmacro register-block-evaluator (language (string callback) &body body)
   "Convenience macro to register block evaluators, wraps setf."
   `(setf (gethash ,language *block-evaluators*)
          (lambda (,string ,callback)
+           ,@body)))
+
+(defmacro register-result-processor (name (result) &body body)
+  "Convenience macro to register result processors, wraps setf."
+  `(setf (gethash ,name *result-processors*)
+         (lambda (,result)
            ,@body)))
 
 (defmacro with-constant-position ((point) &body body)
@@ -48,6 +57,16 @@
     (unless (str:emptyp str)
       str)))
 
+(defun block-fence-words (fence)
+  "Get words trailing a block fence."
+  (str:words (coerce (cdddr (coerce fence 'list)) 'string)))
+
+(defun apply-processors (processors result)
+  "Apply a list of single-argument functions to result."
+  (reduce (lambda (ag proc) (funcall (gethash proc *result-processors*) ag))
+          processors
+          :initial-value result))
+
 (defun block-at-point (point)
   "Get the language of a code block and its contents."
   (search-backward-regexp point "```")
@@ -55,10 +74,11 @@
     (search-forward point (format nil "~%"))
     (let ((start (copy-point point)))
       (search-forward-regexp point "```")
-      (search-backward point (format nil "~%"))
-      (let ((string (points-to-string start point)))
-        (delete-point start)
-        (values lang string)))))
+      (let ((procs (block-fence-words (line-string point))))
+        (search-backward point (format nil "~%"))
+        (let ((string (points-to-string start point)))
+          (delete-point start)
+          (values lang string procs))))))
 
 (define-command markdown-kill-block-result (&optional (point (current-point))) ()
   "Searches for a result block below the current code block, and kills it."
@@ -83,6 +103,7 @@
   "Insert results of evaluation in a code block."
   (block-at-point point)
   (search-forward-regexp point "```")
+  (line-end point)
   (insert-string point (format nil "~%~%```result~%~a~%```" result))
   (message "Block evaluated."))
 
@@ -91,36 +112,34 @@
   (declare (ignore point result))
   (message "Block evaluated."))
 
-(defun cleanup-after-handler (handler)
-  "Wrap handlers to delete the point when they are done."
-  (lambda (point result)
-    (funcall handler point result)
+(defun wrap-handler (handler point preprocessors)
+  "Wrap handlers to capture and delete the point when they are done.
+Also applies preprocessors from the code block."
+  (lambda (result)
+    (funcall handler point (apply-processors preprocessors result))
     (delete-point point)))
 
 (defun eval-block-internal (point handler)
   "Evaluate code block and apply handler to result."
   (when-markdown-mode
-    (multiple-value-bind (lang block) (block-at-point point)
+    (multiple-value-bind (lang block procs) (block-at-point point)
       (when lang
         (if-let ((evaluator (gethash lang *block-evaluators*)))
-          (funcall evaluator block (curry handler point))
+          (funcall evaluator block (wrap-handler handler point procs))
           (message "No evaluator registered for ~a." lang))))))
 
 (define-command markdown-eval-block () ()
   "Evaluate current markdown code block and display results in pop-up."
-  (eval-block-internal (copy-point (current-point))
-                       (cleanup-after-handler #'pop-up-eval-result)))
+  (eval-block-internal (copy-point (current-point)) #'pop-up-eval-result))
 
 (define-command markdown-eval-block-nop () ()
   "Evaluate current markdown code block and do nothing with result."
-  (eval-block-internal (copy-point (current-point))
-                       (cleanup-after-handler #'nop-eval-result)))
+  (eval-block-internal (copy-point (current-point)) #'nop-eval-result))
 
 (define-command markdown-eval-block-and-insert () ()
   "Evaluate current markdown code block and display results in pop-up."
   (markdown-kill-block-result)
-  (eval-block-internal (copy-point (current-point))
-                       (cleanup-after-handler #'insert-eval-result)))
+  (eval-block-internal (copy-point (current-point)) #'insert-eval-result))
 
 ;;
 ;; Default evaluators:
@@ -138,3 +157,14 @@
   (lem-lisp-mode:lisp-eval-async
    `(eval (read-from-string ,(format nil "(progn ~a)" string)))
    callback))
+
+;;
+;; Default preprocessors:
+;;
+
+(register-result-processor "literal" (result)
+  (format nil "~s" result))
+
+(register-result-processor "none" (result)
+  (declare (ignore result))
+  "")
