@@ -92,7 +92,7 @@
                        ;; (try to) handle non-unix platforms path separators.
                        (add-directory-separator marker) pathname)
         if (member subpath subdirectories :test #'equal)
-          return t
+        return t
         finally (return)))
 
 (defvar *recurse* t)
@@ -153,9 +153,8 @@
          (root (or project-root cwd)))
     (message "Current project root: ~a" root)))
 
-(define-command project-root-directory (arg) ("p")
+(define-command project-root-directory () ()
   "Open this project's root directory."
-  (declare (ignorable arg))
   (let* ((cwd (buffer-directory))
          (project-root (find-root cwd))
          (root (or project-root cwd)))
@@ -170,7 +169,7 @@
         with root = (namestring root)
         for project = (namestring (find-root (buffer-directory buffer)))
         if (equal project root)
-          collect buffer))
+        collect buffer))
 
 (defun maybe-delete-repl-buffer (buffer)
   (if *delete-repl-buffer*
@@ -203,15 +202,15 @@
         for i = all-count then (decf i)
         ;; Deleting the very last buffer makes Lem quit, so we don't do it by default.
         if (= 1 i)
-          do (maybe-delete-last-buffer buffer)
+        do (maybe-delete-last-buffer buffer)
         else
-          ;; We might want to keep the REPL buffer around,
-          ;; even if it seems that by deleting it we don't loose its history.
-          do (if (buffer-repl-p buffer)
-                 (maybe-delete-repl-buffer buffer)
-                 (progn
-                   (delete-buffer buffer)
-                   (signal 'buffer-deleted-p)))))
+        ;; We might want to keep the REPL buffer around,
+        ;; even if it seems that by deleting it we don't loose its history.
+        do (if (buffer-repl-p buffer)
+               (maybe-delete-repl-buffer buffer)
+               (progn
+                 (delete-buffer buffer)
+                 (signal 'buffer-deleted-p)))))
 
 (define-command project-kill-buffers () ()
   "Delete all this project's buffers, except:
