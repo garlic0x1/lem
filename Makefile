@@ -4,6 +4,10 @@ ncurses:
 	qlot install
 	$(LISP) --noinform --no-sysinit --no-userinit --load .qlot/setup.lisp --load scripts/build-ncurses.lisp
 
+termbox2:
+	qlot install
+	$(LISP) --noinform --no-sysinit --no-userinit --load .qlot/setup.lisp --load scripts/build-termbox2.lisp
+
 sdl2:
 	qlot install
 	$(LISP) --noinform --no-sysinit --no-userinit --load .qlot/setup.lisp --load scripts/build-sdl2.lisp
