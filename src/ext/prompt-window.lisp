@@ -360,6 +360,7 @@
                                        &key initial-value
                                             completion-function
                                             test-function
+                                            description-function
                                             history-symbol
                                             (syntax-table (current-syntax))
                                             gravity

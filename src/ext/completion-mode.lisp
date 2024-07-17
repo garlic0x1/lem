@@ -62,6 +62,10 @@
     :initform ""
     :reader completion-item-label
     :type string)
+   (description
+    :initarg :description
+    :initform ""
+    :reader completion-item-description)
    (chunks
     :initarg :chunks
     :initform nil
@@ -125,7 +129,9 @@
 
 (defun compute-label-width (items)
   (loop :for item :in items
-        :maximize (1+ (length (completion-item-label item)))))
+        :maximize (+ 1
+                     (length (completion-item-label item))
+                     (length (completion-item-description item)))))
 
 (defun make-print-spec (items)
   (make-instance 'print-spec
@@ -135,7 +141,9 @@
 (defmethod lem/popup-menu:apply-print-spec ((print-spec print-spec) point item)
   (with-point ((start point))
     (insert-string point " ")
-    (insert-string point (completion-item-label item))
+    (insert-string point (format nil "~a ~a"
+                                 (completion-item-label item)
+                                 (completion-item-description item)))
     (loop :for (offset-start . offset-end) :in (completion-item-chunks item)
           :do (with-point ((start point) (end point))
                 (character-offset (line-start start) (1+ offset-start))
@@ -229,7 +237,10 @@
   (when item
     (multiple-value-bind (start end) (completion-item-range point item)
       (delete-between-points start end)
-      (insert-string point (subseq (completion-item-label item) 0 begin)))))
+      (insert-string point (subseq (format nil "~a ~a"
+                                           (completion-item-label item)
+                                           (completion-item-description item))
+                                   0 begin)))))
 
 (defun partial-match (strings)
   (when strings

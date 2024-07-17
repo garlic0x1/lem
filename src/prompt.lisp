@@ -31,6 +31,7 @@
                                  &key initial-value
                                       completion-function
                                       test-function
+                                      description-function
                                       (history-symbol nil)
                                       (syntax-table (current-syntax))
                                       (gravity *default-prompt-gravity*)
@@ -40,6 +41,7 @@
   (declare (ignore initial-value
                    completion-function
                    test-function
+                   description-function
                    history-symbol
                    syntax-table
                    gravity

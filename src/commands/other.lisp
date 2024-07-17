@@ -67,6 +67,7 @@
                                             (completion str (all-command-names)))
                                         #'string-lessp))
                 :test-function 'exist-command-p
+                :description-function (lambda (name) (documentation (intern name) 'function))
                 :history-symbol 'mh-execute-command))
          (command (find-command name)))
     (if command
